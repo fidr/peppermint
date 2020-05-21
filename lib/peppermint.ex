@@ -43,6 +43,9 @@ defmodule Peppermint do
   end
 
   @doc section: :reuse
+  def connect(url, options \\ [])
+
+  @doc section: :reuse
   def connect(url, options) when is_binary(url) do
     connect(URI.parse(url), options)
   end

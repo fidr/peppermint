@@ -71,9 +71,9 @@ Peppermint.get("http://httpbin.org/get",
 You can reuse your connection if need to do multiple requests to the same host. For more advanced usecases you should use Mint directly.
 
 ```elixir
-{:ok, conn} = Peppermint.connect("http://httpbin.org")
+{:ok, conn} = Peppermint.connect("http://httpbin.org", [])
 {:ok, conn, response1} = Peppermint.request(conn, :get, "/get?foo=bar", [])
-{:ok, conn, response2} = Peppermint.request(conn, :post, "/post", params: %{foo: bar})
+{:ok, conn, response2} = Peppermint.request(conn, :post, "/post", params: %{foo: "bar"})
 {:ok, _conn} = Peppermint.close(conn)
 ```
 

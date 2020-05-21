@@ -42,7 +42,7 @@ defmodule Peppermint.MixProject do
   defp package do
     [
       name: :peppermint,
-      files: ["lib", "priv", "mix.exs", "README*", "LICENSE*"],
+      files: ["lib", "mix.exs", "README*", "LICENSE*", "CHANGELOG*"],
       maintainers: ["Robin Fidder"],
       licenses: ["MIT"],
       links: %{"GitHub" => "https://github.com/fidr/peppermint"}
