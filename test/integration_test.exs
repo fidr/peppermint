@@ -39,6 +39,13 @@ defmodule IntegrationTest do
     assert String.split(allow, ", ") |> Enum.sort() == ["GET", "HEAD", "OPTIONS"]
   end
 
+  test "reuse connection on http2" do
+    assert {:ok, conn} = Peppermint.Connection.open("https://http2.golang.org")
+    assert {:ok, %{status: 200}} = Peppermint.Connection.request(conn, :get, "/")
+    assert {:ok, %{status: 200}} = Peppermint.Connection.request(conn, :get, "/")
+    assert :ok = Peppermint.Connection.close(conn)
+  end
+
   test "gzip" do
     assert {:ok, %{body: body}} = Peppermint.get("http://httpbin.org/gzip")
     assert body =~ ~S["gzipped": true]
@@ -57,14 +64,17 @@ defmodule IntegrationTest do
   end
 
   test "query as params" do
-    assert {:ok, %{body: body}} =
-             Peppermint.get("http://httpbin.org/get", params: %{test_arg: "1"})
+    assert {:ok, %{body: body}} = Peppermint.get("http://httpbin.org/get", params: %{test_arg: "1"})
 
     assert body =~ ~S["test_arg": "1"]
   end
 
-  test "push promise is not supported" do
-    assert_raise RuntimeError, fn -> Peppermint.get("https://http2.golang.org/serverpush") end
+  test "warn on push promise" do
+    import ExUnit.CaptureLog
+
+    assert capture_log(fn ->
+             assert {:ok, %{status: 200}} = Peppermint.get("https://http2.golang.org/serverpush")
+           end) =~ "Unsupported push promise"
   end
 
   test "receive timeout" do

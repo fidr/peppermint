@@ -1,8 +1,8 @@
 # Peppermint
 
-Simple Elixir HTTP client build on [Mint](https://github.com/elixir-mint/mint). It supports both HTTP 1 and HTTP 2 requests.
+Simple Elixir HTTP client build on [Mint](https://github.com/elixir-mint/mint). It supports both HTTP/1 and HTTP/2 requests.
 
-Peppermint aims to provide a simple interface build on the modern low-level Mint library. It provides a process-less and pool-less architecture.
+Peppermint aims to provide a simple interface build on the modern low-level Mint library. It provides a pool-less architecture, but it can be used to build your own connection pools easily.
 
 Currently peppermint requires elixir `~> 1.10`
 
@@ -13,7 +13,7 @@ Add to your `mix.exs` and run `mix deps.get`:
 ```elixir
 def deps do
   [
-    {:peppermint, "~> 0.1.0"},
+    {:peppermint, "~> 0.2.0"},
     {:castore, "~> 0.1.0"}
   ]
 end
@@ -22,6 +22,8 @@ end
 ## Usage
 
 ### Examples
+
+Fire a one-off request. Connects to the host, executes the request and disconnects.
 
 #### GET
 ```elixir
@@ -68,13 +70,14 @@ Peppermint.get("http://httpbin.org/get",
 
 #### Reuse connection
 
-You can reuse your connection if need to do multiple requests to the same host. For more advanced usecases you should use Mint directly.
+To reuse a connection, the `Peppermint.Connection` provides a simple GenServer to handle a connection and
+(possibly) simultanions requests:
 
 ```elixir
-{:ok, conn} = Peppermint.connect("http://httpbin.org", [])
-{:ok, conn, response1} = Peppermint.request(conn, :get, "/get?foo=bar", [])
-{:ok, conn, response2} = Peppermint.request(conn, :post, "/post", params: %{foo: "bar"})
-{:ok, _conn} = Peppermint.close(conn)
+{:ok, conn} = Peppermint.Connection.open("http://httpbin.org")
+{:ok, response} = Peppermint.Connection.request(conn, :get, "/get?foo=bar")
+{:ok, response} = Peppermint.Connection.request(conn, :post, "/post", params: %{foo: "bar"})
+:ok = Peppermint.Connection.close(conn)
 ```
 
 

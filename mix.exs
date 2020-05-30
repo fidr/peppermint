@@ -4,7 +4,7 @@ defmodule Peppermint.MixProject do
   def project do
     [
       app: :peppermint,
-      version: "0.1.0",
+      version: "0.2.0",
       elixir: "~> 1.10",
       elixirc_paths: elixirc_paths(Mix.env()),
       start_permanent: Mix.env() == :prod,
@@ -35,7 +35,7 @@ defmodule Peppermint.MixProject do
 
   def description do
     """
-    HTTP client build on Mint
+    Simple pool-less HTTP client build on Mint
     """
   end
 
@@ -57,9 +57,8 @@ defmodule Peppermint.MixProject do
       main: "readme",
       extras: ["README.md"],
       groups_for_functions: [
-        {:"Request Helpers", & &1[:section] == :request_helper},
-        {:"Base request", & &1[:section] == :base_request},
-        {:"Reuse connection", & &1[:section] == :reuse},
+        {:"Request", & &1[:section] == :base_request},
+        {:"Request Helpers", & &1[:section] == :request_helper}
       ]
     ]
   end
