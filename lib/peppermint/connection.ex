@@ -2,7 +2,11 @@ defmodule Peppermint.Connection do
   use GenServer
 
   @moduledoc """
-  Reusable process to handle a connection. Allowing simulatious requests (over HTTP/2).
+  Reusable process to handle a connection.
+
+  - Executes requests in parallel on HTTP/2 (multiplexing). Note: since the request function is a
+    GenServer call, to have async requests, they'll need to come from multiple processes.
+  - Executes requests sequentially on HTTP/1
 
   Example:
 
@@ -51,6 +55,27 @@ defmodule Peppermint.Connection do
   end
 
   @doc false
+  # Handle HTTP1 requests in sequence
+  def handle_call({:request, method, path, options}, _from, %{conn: %Mint.HTTP1{}} = state) do
+    %{conn: conn} = ensure_connection(state)
+
+    case Peppermint.execute(conn, method, path, options) do
+      {:ok, conn, request_ref} ->
+        case Peppermint.receive_response(conn, request_ref, options) do
+          {:ok, conn, response} ->
+            {:reply, {:ok, response}, %{state | conn: conn}}
+
+          {:error, conn, reason} ->
+            {:reply, {:error, reason}, %{state | conn: conn}}
+        end
+
+      {:error, conn, reason} ->
+        {:reply, {:error, reason}, %{state | conn: conn}}
+    end
+  end
+
+  @doc false
+  # Handle HTTP2 requests simulaniously
   def handle_call({:request, method, path, options}, from, state) do
     %{conn: conn, requests: requests, refs: refs} = ensure_connection(state)
 
@@ -76,7 +101,7 @@ defmodule Peppermint.Connection do
   @doc false
   def handle_cast(:close, %{conn: conn} = state) do
     {:ok, conn} = Peppermint.close(conn)
-    {:stop, %{state | conn: conn}}
+    {:stop, :normal, %{state | conn: conn}}
   end
 
   @doc false

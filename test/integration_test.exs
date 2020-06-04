@@ -1,6 +1,5 @@
 defmodule IntegrationTest do
   use ExUnit.Case
-  doctest Peppermint
 
   test "get" do
     assert {:ok,
@@ -39,11 +38,42 @@ defmodule IntegrationTest do
     assert String.split(allow, ", ") |> Enum.sort() == ["GET", "HEAD", "OPTIONS"]
   end
 
+  test "reuse connection on http1" do
+    assert {:ok, conn} = Peppermint.Connection.open("http://httpbin.org")
+    assert {:ok, %{status: 200}} = Peppermint.Connection.request(conn, :get, "/")
+    assert {:ok, %{status: 200}} = Peppermint.Connection.request(conn, :get, "/")
+    assert :ok = Peppermint.Connection.close(conn)
+  end
+
+  test "async http1" do
+    assert {:ok, conn} = Peppermint.Connection.open("http://httpbin.org")
+
+    reqs =
+      Enum.map(1..5, fn _i ->
+        Task.async(fn -> Peppermint.Connection.request(conn, :get, "/") end)
+      end)
+
+    assert Enum.map(reqs, &Task.await/1)
+           |> Enum.all?(fn item -> match?({:ok, %{status: 200}}, item) end)
+  end
+
   test "reuse connection on http2" do
     assert {:ok, conn} = Peppermint.Connection.open("https://http2.golang.org")
     assert {:ok, %{status: 200}} = Peppermint.Connection.request(conn, :get, "/")
     assert {:ok, %{status: 200}} = Peppermint.Connection.request(conn, :get, "/")
     assert :ok = Peppermint.Connection.close(conn)
+  end
+
+  test "async http2" do
+    assert {:ok, conn} = Peppermint.Connection.open("https://http2.golang.org")
+
+    reqs =
+      Enum.map(1..5, fn _i ->
+        Task.async(fn -> Peppermint.Connection.request(conn, :get, "/") end)
+      end)
+
+    assert Enum.map(reqs, &Task.await/1)
+           |> Enum.all?(fn item -> match?({:ok, %{status: 200}}, item) end)
   end
 
   test "gzip" do

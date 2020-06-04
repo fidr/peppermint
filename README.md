@@ -71,7 +71,7 @@ Peppermint.get("http://httpbin.org/get",
 #### Reuse connection
 
 To reuse a connection, the `Peppermint.Connection` provides a simple GenServer to handle a connection and
-(possibly) simultanions requests:
+simultanious requests over HTTP/2 (multiplexing) or sequentially over HTTP/1:
 
 ```elixir
 {:ok, conn} = Peppermint.Connection.open("http://httpbin.org")

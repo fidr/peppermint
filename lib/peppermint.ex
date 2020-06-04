@@ -56,8 +56,7 @@ defmodule Peppermint do
 
     with {:ok, conn} <- connect(uri, options),
          {:ok, conn, request_ref} <- execute(conn, method, path(uri, method, options), options),
-         {:ok, conn, response} <-
-           receive_response(conn, request_ref, options, %{request_ref => %{}}) do
+         {:ok, conn, response} <- receive_response(conn, request_ref, options) do
       Mint.HTTP.close(conn)
       {:ok, maybe_decompress(response, options)}
     else
@@ -95,17 +94,32 @@ defmodule Peppermint do
     Mint.HTTP.request(conn, method(method), path, headers, body)
   end
 
-  defp receive_response(conn, request_ref, options, acc) do
+  @doc """
+  Receive the response of a single request_req
+  """
+  @spec receive_response(Mint.HTTP.t(), Mint.Types.request_ref(), keyword) ::
+          {:ok, Mint.HTTP.t(), Peppermint.Response.t()} | {:error, Mint.HTTP.t(), any}
+  def receive_response(conn, request_ref, options, acc \\ nil) do
+    acc = acc || %{request_ref => %{}}
     timeout = Keyword.get(options, :receive_timeout, 5_000)
 
     receive do
       message when Mint.HTTP.is_connection_message(conn, message) ->
         case handle_message(conn, message, acc) do
           {:ok, conn, {_acc, %{^request_ref => result}}} ->
-            {:ok, conn, result}
+            case result do
+              {:error, reason} ->
+                {:error, conn, reason}
+
+              response ->
+                {:ok, conn, response}
+            end
 
           {:ok, conn, {acc, _results}} ->
             receive_response(conn, request_ref, options, acc)
+
+          {:error, conn, reason, _acc} ->
+            {:error, conn, reason}
 
           {:unknown, conn, acc} ->
             receive_response(conn, request_ref, options, acc)
@@ -187,8 +201,7 @@ defmodule Peppermint do
         {Map.update(request, :body, [binary], fn data -> [binary | data] end), nil}
 
       {:error, reason} ->
-        # TODO: check if we're done here?
-        {Map.put(request, :error, reason), nil}
+        {nil, {:error, reason}}
 
       :pong ->
         {request, nil}
