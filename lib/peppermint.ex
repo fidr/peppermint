@@ -11,7 +11,8 @@ defmodule Peppermint do
       {:ok, response} = Peppermint.post("http://httpbin.org/post", params: %{foo: "bar"})
   """
 
-  @type request_error :: {:error, Mint.Types.error() | :receive_timeout}
+  @type request_error :: {:error, Mint.Types.error() | :receive_timeout | :invalid_uri}
+  @type connect_error :: {:error, Mint.Types.error() | :invalid_uri}
 
   @spec get(String.t(), keyword) :: {:ok, Peppermint.Response.t()} | request_error
   @spec post(String.t(), keyword) :: {:ok, Peppermint.Response.t()} | request_error
@@ -69,11 +70,11 @@ defmodule Peppermint do
     end
   end
 
-  @spec connect(String.t()) :: {:ok, Mint.HTTP.t()} | {:error, Mint.Types.error()}
-  @spec connect(String.t(), keyword) :: {:ok, Mint.HTTP.t()} | {:error, Mint.Types.error()}
-  @spec connect(URI.t(), keyword) :: {:ok, Mint.HTTP.t()} | {:error, Mint.Types.error()}
+  @spec connect(String.t()) :: {:ok, Mint.HTTP.t()} | connect_error
+  @spec connect(String.t(), keyword) :: {:ok, Mint.HTTP.t()} | connect_error
+  @spec connect(URI.t(), keyword) :: {:ok, Mint.HTTP.t()} | connect_error
   @spec connect(Mint.Types.scheme(), String.t(), :inet.port_number(), keyword()) ::
-          {:ok, Mint.HTTP.t()} | {:error, Mint.Types.error()}
+          {:ok, Mint.HTTP.t()} | connect_error
 
   def connect(url, options \\ [])
   def connect(url, options) when is_binary(url), do: connect(URI.parse(url), options)
