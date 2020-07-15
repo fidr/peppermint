@@ -13,7 +13,7 @@ Add to your `mix.exs` and run `mix deps.get`:
 ```elixir
 def deps do
   [
-    {:peppermint, "~> 0.2.0"},
+    {:peppermint, "~> 0.3.0"},
     {:castore, "~> 0.1.0"}
   ]
 end
