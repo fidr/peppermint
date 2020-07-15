@@ -116,4 +116,12 @@ defmodule IntegrationTest do
     assert {:error, %Mint.TransportError{reason: :timeout}} ==
              Peppermint.get("http://www.google.com:81", transport_opts: [timeout: 50])
   end
+
+  test "missing scheme" do
+    assert {:error, :invalid_uri} = Peppermint.get("httpstat.us/200")
+  end
+
+  test "missing host" do
+    assert {:error, :invalid_uri} = Peppermint.get("http://")
+  end
 end

@@ -78,6 +78,8 @@ defmodule Peppermint do
   def connect(url, options \\ [])
   def connect(url, options) when is_binary(url), do: connect(URI.parse(url), options)
   def connect(%URI{} = uri, options), do: connect(scheme(uri.scheme), uri.host, uri.port, options)
+  def connect(_, "", _, _), do: {:error, :invalid_uri}
+  def connect(nil, _, _, _), do: {:error, :invalid_uri}
   def connect(scheme, host, port, options), do: Mint.HTTP.connect(scheme, host, port, options)
 
   @spec close(Mint.HTTP.t()) :: {:ok, Mint.HTTP.t()}
@@ -265,6 +267,7 @@ defmodule Peppermint do
   @doc false
   def scheme("https"), do: :https
   def scheme("http"), do: :http
+  def scheme(_), do: nil
 
   @doc false
   def method(:get), do: "GET"
